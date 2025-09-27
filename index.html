@@ -163,7 +163,7 @@
     <button id="music-button" class="play"></button>
 
     <!-- Player de áudio invisível (substituindo o YouTube) -->
-    <audio id="audio-player" loop preload="metadata"></audio>
+    <audio id="audio-player" loop preload="metadata" autoplay></audio>
     
     <script>
         // JavaScript - Interatividade (incluindo controle do player de música)
@@ -176,7 +176,7 @@
                 statusEl.style.display = 'block';
                 setTimeout(() => {
                     statusEl.style.display = 'none';
-                }, 3000);
+                }, 5000); // Aumentei para 5s para autoplay
             } else {
                 statusEl.style.display = 'none';
             }
@@ -214,6 +214,14 @@
             audio.addEventListener('error', (e) => {
                 console.error('Erro no áudio:', e);
                 updateStatus('Erro ao carregar o áudio. Verifique a conexão ou o link do arquivo.');
+            });
+            
+            audio.addEventListener('canplay', () => {
+                // Quando o áudio está pronto para tocar, tenta autoplay
+                audio.play().catch((error) => {
+                    console.warn('Autoplay bloqueado pelo navegador:', error);
+                    updateStatus('Clique no botão ▶ para iniciar a música (autoplay bloqueado pelo navegador).');
+                });
             });
             
             // --- 1. EFEITO PARALLAX DO FUNDO ---
