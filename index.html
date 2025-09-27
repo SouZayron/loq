@@ -34,34 +34,28 @@
             overflow: hidden;
         }
         
-        /* A imagem real dentro do container - TEMA PADRÃO (GREEN DARK) */
+        /* A imagem real dentro do container - TEMA PADRÃO (ORIGINAL) */
         #background-image {
             width: 100%;
             height: 100%;
-            /* Fundo Padrão (Green) */
             background-image: url('https://xatimg.com/image/u1KlkAc0rjf1.png');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
-            
-            /* Efeito Dark Padrão */
-            filter: brightness(0.5) saturate(0.5);
-            
-            /* Transição suave para a troca de fundo e filtro */
+            filter: none; 
             transition: transform 0.2s ease-out, background-image 0.2s ease-in-out, filter 0.2s ease-in-out;
         }
 
-        /* NOVO: Classe para o TEMA HOVER (Fundo 2 - Black) */
+        /* Classe para o TEMA HOVER (ULTIMA IMAGEM) */
         .theme-hover {
-            /* Fundo 2: Imagem do Coração/Preto */
-            background-image: url('https://xatimg.com/image/lnMX964Eumqr.jpg') !important;
-            /* Remove o filtro Dark para esta imagem */
+            /* A imagem mais recente que aparece ao passar o mouse */
+            background-image: url('https://xatimg.com/image/H0Pg9bpiICuN.png') !important;
             filter: none !important;
         }
         
         .main-text {
             font-family: 'Pirata One', cursive;
-            font-size: 15vw;
+            font-size: 13.5vw; 
             color: #62d44f; 
             cursor: pointer;
             user-select: none;
@@ -128,12 +122,10 @@
             const particleImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Blohsh.png';
             const explosionStrength = 250; 
 
-            // A explosão continua no 'mousemove'
             mainText.addEventListener('mousemove', (event) => {
                 const mouseX = event.clientX; 
                 const mouseY = event.clientY;
 
-                // Frequência reduzida para evitar excesso de partículas
                 if (Math.random() < 0.3) {
                     createParticle(mouseX, mouseY);
                 }
@@ -163,17 +155,15 @@
             }
             
             
-            // --- 3. TROCA DE TEMA AO PASSAR O MOUSE (NOVO) ---
+            // --- 3. TROCA DE TEMA AO PASSAR O MOUSE ---
             
             // Mouse ENTRA no texto
             mainText.addEventListener('mouseenter', () => {
-                // Aplica a classe do tema "Black" (Fundo 2)
                 backgroundImage.classList.add('theme-hover');
             });
 
             // Mouse SAI do texto
             mainText.addEventListener('mouseleave', () => {
-                // Remove a classe do tema "Black", voltando ao tema "Green Dark" (Fundo 1)
                 backgroundImage.classList.remove('theme-hover');
             });
             
