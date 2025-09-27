@@ -87,6 +87,29 @@
                 opacity: 0; 
             }
         }
+
+        /* Estilo para o player de música no rodapé (miniaturized/fixo no fundo, proporção 16:9) */
+        #footer-player {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 5px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 320px;
+            height: 180px; /* Ajustado para proporção 16:9 (320 * 9/16 = 180) */
+            overflow: hidden;
+        }
+
+        #footer-player iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -96,6 +119,15 @@
     </div>
     
     <h1 class="main-text" id="mainText">Loquesiento</h1>
+
+    <!-- Player de música do YouTube no rodapé (miniaturized com proporção 16:9) -->
+    <div id="footer-player">
+        <iframe 
+            src="https://www.youtube.com/embed/l08Zw-RY__Q?list=RDl08Zw-RY__Q&start_radio=1&controls=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Fexample.com&widgetid=1" 
+            frameborder="0" 
+            allowfullscreen>
+        </iframe>
+    </div>
     
     <script>
         // JavaScript - Interatividade
