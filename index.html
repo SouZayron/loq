@@ -132,6 +132,20 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Estilo para indicador de loading/error (opcional, escondido por padrão) */
+        #player-status {
+            position: fixed;
+            bottom: 20px;
+            right: 90px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +155,9 @@
     </div>
     
     <h1 class="main-text" id="mainText">Loquesiento</h1>
+
+    <!-- Indicador de status do player (opcional, para debug) -->
+    <div id="player-status"></div>
 
     <!-- Botão de play/pause no rodapé à direita -->
     <button id="music-button" class="play"></button>
@@ -153,9 +170,75 @@
         // JavaScript - Interatividade (incluindo controle do player de música)
 
         let player; // Variável global para o player do YouTube
+        let playerReady = false; // Flag para verificar se o player está pronto
+
+        // --- INICIALIZAÇÃO DO PLAYER DO YOUTUBE (DEFINIDA FORA DO DOMCONTENTLOADED PARA EVITAR PROBLEMAS DE TIMING) ---
+        // Função chamada pela API do YouTube quando o script carrega (definida globalmente)
+        window.onYouTubeIframeAPIReady = function() {
+            player = new YT.Player('youtube-player', {
+                height: '0', // Invisível
+                width: '0',  // Invisível
+                videoId: 'l08Zw-RY__Q', // ID do vídeo
+                playerVars: {
+                    'list': 'RDl08Zw-RY__Q', // Playlist
+                    'start': 0, // Inicia do começo (start_radio=1 é simulado pela playlist)
+                    'controls': 0, // Sem controles visíveis (já que é invisível)
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'iv_load_policy': 3,
+                    'enablejsapi': 1,
+                    'playsinline': 1, // Para mobile
+                    'autoplay': 0 // Não autoplay inicial
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError // Adicionado para lidar com erros
+                }
+            });
+        };
+
+        function onPlayerReady(event) {
+            playerReady = true;
+            console.log('Player pronto');
+            updateStatus('Player carregado com sucesso!'); // Opcional: remove se não quiser debug
+        }
+
+        function onPlayerStateChange(event) {
+            // Atualiza o botão baseado no estado do player
+            if (event.data == YT.PlayerState.PLAYING) {
+                document.getElementById('music-button').classList.remove('play');
+                document.getElementById('music-button').classList.add('pause');
+                updateStatus(''); // Limpa status
+            } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                document.getElementById('music-button').classList.remove('pause');
+                document.getElementById('music-button').classList.add('play');
+                updateStatus(''); // Limpa status
+            }
+        }
+
+        function onPlayerError(event) {
+            console.error('Erro no player:', event.data);
+            playerReady = false;
+            updateStatus('Erro ao carregar o player. Tente recarregar a página.');
+        }
+
+        // Função auxiliar para atualizar status (opcional, para debug)
+        function updateStatus(message) {
+            const statusEl = document.getElementById('player-status');
+            if (message) {
+                statusEl.textContent = message;
+                statusEl.style.display = 'block';
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            } else {
+                statusEl.style.display = 'none';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
-
             const mainText = document.getElementById('mainText');
             const backgroundImage = document.getElementById('background-image');
             const musicButton = document.getElementById('music-button');
@@ -222,51 +305,9 @@
                 backgroundImage.classList.remove('theme-hover');
             });
 
-            // --- 4. INICIALIZAÇÃO DO PLAYER DO YOUTUBE (invisível) ---
-            // Função chamada pela API do YouTube quando o script carrega
-            window.onYouTubeIframeAPIReady = function() {
-                player = new YT.Player('youtube-player', {
-                    height: '0', // Invisível
-                    width: '0',  // Invisível
-                    videoId: 'l08Zw-RY__Q', // ID do vídeo
-                    playerVars: {
-                        'list': 'RDl08Zw-RY__Q', // Playlist
-                        'start': 0, // Inicia do começo (start_radio=1 é simulado pela playlist)
-                        'controls': 0, // Sem controles visíveis (já que é invisível)
-                        'modestbranding': 1,
-                        'rel': 0,
-                        'showinfo': 0,
-                        'iv_load_policy': 3,
-                        'enablejsapi': 1,
-                        'playsinline': 1, // Para mobile
-                        'autoplay': 0 // Não autoplay inicial
-                    },
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': onPlayerStateChange
-                    }
-                });
-            };
-
-            function onPlayerReady(event) {
-                // Player pronto, mas não inicia automaticamente
-                console.log('Player pronto');
-            }
-
-            function onPlayerStateChange(event) {
-                // Atualiza o botão baseado no estado do player
-                if (event.data == YT.PlayerState.PLAYING) {
-                    musicButton.classList.remove('play');
-                    musicButton.classList.add('pause');
-                } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
-                    musicButton.classList.remove('pause');
-                    musicButton.classList.add('play');
-                }
-            }
-
-            // --- 5. EVENTO DO BOTÃO DE PLAY/PAUSE ---
+            // --- 4. EVENTO DO BOTÃO DE PLAY/PAUSE (MODIFICADO PARA NÃO REDIRECIONAR) ---
             musicButton.addEventListener('click', () => {
-                if (player && player.getPlayerState) {
+                if (playerReady && player && player.getPlayerState) {
                     const state = player.getPlayerState();
                     if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
                         player.pauseVideo(); // Pausa
@@ -274,11 +315,33 @@
                         player.playVideo(); // Toca (requer interação do usuário para áudio)
                     }
                 } else {
-                    // Fallback: se o player não carregou, abre o link no YouTube
-                    window.open('https://www.youtube.com/watch?v=l08Zw-RY__Q&list=RDl08Zw-RY__Q&start_radio=1', '_blank');
+                    // Em vez de redirecionar, mostra um aviso e tenta recarregar o player
+                    // (Opcional: você pode remover isso e só logar no console)
+                    console.warn('Player não está pronto. Aguardando carregamento...');
+                    updateStatus('Carregando player... Clique novamente em breve.');
+                    
+                    // Tenta forçar o recarregamento do player se possível (mas evite loops)
+                    if (!playerReady) {
+                        // Pequeno delay para dar tempo ao API carregar
+                        setTimeout(() => {
+                            if (window.YT && YT.Player) {
+                                // Recria o player se a API estiver disponível
+                                if (document.getElementById('youtube-player')) {
+                                    document.getElementById('youtube-player').innerHTML = ''; // Limpa iframe antigo
+                                }
+                                window.onYouTubeIframeAPIReady(); // Chama novamente
+                            }
+                        }, 1000);
+                    }
                 }
             });
 
+            // --- 5. VERIFICAÇÃO ADICIONAL: Se o player não carregar em 10s, avisa ---
+            setTimeout(() => {
+                if (!playerReady) {
+                    updateStatus('Falha no carregamento. Verifique sua conexão ou adblocker.');
+                }
+            }, 10000);
         });
     </script>
 
