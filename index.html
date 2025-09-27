@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loquesiento</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS - Estilização e Animações */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        /* Container para o Parallax (Base) */
+        #background-container {
+            position: absolute;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        /* A imagem real dentro do container - TEMA PADRÃO (GREEN DARK) */
+        #background-image {
+            width: 100%;
+            height: 100%;
+            /* Fundo Padrão (Green) */
+            background-image: url('https://xatimg.com/image/u1KlkAc0rjf1.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            
+            /* Efeito Dark Padrão */
+            filter: brightness(0.5) saturate(0.5);
+            
+            /* Transição suave para a troca de fundo e filtro */
+            transition: transform 0.2s ease-out, background-image 0.2s ease-in-out, filter 0.2s ease-in-out;
+        }
+
+        /* NOVO: Classe para o TEMA HOVER (Fundo 2 - Black) */
+        .theme-hover {
+            /* Fundo 2: Imagem do Coração/Preto */
+            background-image: url('https://xatimg.com/image/lnMX964Eumqr.jpg') !important;
+            /* Remove o filtro Dark para esta imagem */
+            filter: none !important;
+        }
+        
+        .main-text {
+            font-family: 'Pirata One', cursive;
+            font-size: 15vw;
+            color: #62d44f; 
+            cursor: pointer;
+            user-select: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle {
+            position: absolute;
+            width: 50px;
+            height: auto;
+            pointer-events: none;
+            z-index: 100;
+            animation: explode 1.2s ease-out forwards;
+        }
+
+        /* Animação de flutuação para o texto */
+        @keyframes float {
+            0% { transform: translateY(0px) rotateZ(0deg); }
+            50% { transform: translateY(-20px) rotateZ(1.5deg); }
+            100% { transform: translateY(0px) rotateZ(0deg); }
+        }
+
+        /* Animação de explosão para as partículas */
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { 
+                transform: translate(var(--tx), var(--ty)) scale(0); 
+                opacity: 0; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="background-container">
+        <div id="background-image"></div>
+    </div>
+    
+    <h1 class="main-text" id="mainText">Loquesiento</h1>
+    
+    <script>
+        // JavaScript - Interatividade
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const mainText = document.getElementById('mainText');
+            const backgroundImage = document.getElementById('background-image');
+            
+            // --- 1. EFEITO PARALLAX DO FUNDO ---
+            const parallaxRange = 25; 
+
+            window.addEventListener('mousemove', (e) => {
+                const mouseX = (e.clientX / window.innerWidth) - 0.5;
+                const mouseY = (e.clientY / window.innerHeight) - 0.5;
+                const offsetX = -mouseX * parallaxRange;
+                const offsetY = -mouseY * parallaxRange;
+
+                backgroundImage.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            });
+
+
+            // --- 2. EFEITO DE EXPLOSÃO DE PARTÍCULAS ---
+            const particleImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Blohsh.png';
+            const explosionStrength = 250; 
+
+            // A explosão continua no 'mousemove'
+            mainText.addEventListener('mousemove', (event) => {
+                const mouseX = event.clientX; 
+                const mouseY = event.clientY;
+
+                // Frequência reduzida para evitar excesso de partículas
+                if (Math.random() < 0.3) {
+                    createParticle(mouseX, mouseY);
+                }
+            });
+            
+            function createParticle(x, y) {
+                const particle = document.createElement('img');
+                particle.src = particleImageUrl;
+                particle.classList.add('particle');
+                
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const randomAngle = Math.random() * Math.PI * 2;
+                const randomDistance = Math.random() * explosionStrength;
+                
+                const finalX = Math.cos(randomAngle) * randomDistance;
+                const finalY = Math.sin(randomAngle) * randomDistance;
+
+                particle.style.setProperty('--tx', `${finalX}px`);
+                particle.style.setProperty('--ty', `${finalY}px`);
+                document.body.appendChild(particle);
+
+                particle.addEventListener('animationend', () => {
+                    particle.remove();
+                });
+            }
+            
+            
+            // --- 3. TROCA DE TEMA AO PASSAR O MOUSE (NOVO) ---
+            
+            // Mouse ENTRA no texto
+            mainText.addEventListener('mouseenter', () => {
+                // Aplica a classe do tema "Black" (Fundo 2)
+                backgroundImage.classList.add('theme-hover');
+            });
+
+            // Mouse SAI do texto
+            mainText.addEventListener('mouseleave', () => {
+                // Remove a classe do tema "Black", voltando ao tema "Green Dark" (Fundo 1)
+                backgroundImage.classList.remove('theme-hover');
+            });
+            
+        });
+    </script>
+
+</body>
+</html>
