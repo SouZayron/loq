@@ -122,8 +122,8 @@
             content: '⏸'; /* Ícone de pause */
         }
 
-        /* Player de áudio invisível (áudio-only) */
-        #audio-player {
+        /* Player invisível (áudio-only, sem vídeo/miniatura) */
+        #youtube-player {
             position: absolute;
             top: -9999px; /* Fora da tela para esconder */
             left: -9999px;
@@ -131,20 +131,6 @@
             height: 0;
             opacity: 0;
             pointer-events: none;
-        }
-
-        /* Estilo para indicador de loading/error (opcional, escondido por padrão) */
-        #player-status {
-            position: fixed;
-            bottom: 20px;
-            right: 90px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            display: none;
         }
     </style>
 </head>
@@ -156,65 +142,23 @@
     
     <h1 class="main-text" id="mainText">Loquesiento</h1>
 
-    <!-- Indicador de status do player (opcional, para debug) -->
-    <div id="player-status"></div>
-
     <!-- Botão de play/pause no rodapé à direita -->
     <button id="music-button" class="play"></button>
 
-    <!-- Player de áudio invisível (substituindo o YouTube) -->
-    <audio id="audio-player" loop preload="metadata"></audio>
+    <!-- Player do YouTube invisível (áudio-only) -->
+    <div id="youtube-player"></div>
     
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         // JavaScript - Interatividade (incluindo controle do player de música)
 
-        // Função auxiliar para atualizar status (opcional, para debug)
-        function updateStatus(message) {
-            const statusEl = document.getElementById('player-status');
-            if (message) {
-                statusEl.textContent = message;
-                statusEl.style.display = 'block';
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 3000);
-            } else {
-                statusEl.style.display = 'none';
-            }
-        }
+        let player; // Variável global para o player do YouTube
 
         document.addEventListener('DOMContentLoaded', () => {
+
             const mainText = document.getElementById('mainText');
             const backgroundImage = document.getElementById('background-image');
             const musicButton = document.getElementById('music-button');
-            const audio = document.getElementById('audio-player');
-            
-            // Configura o áudio com o link direto do Dropbox (adicionado ?dl=1 para download direto)
-            audio.src = 'https://www.dropbox.com/scl/fi/mbzdvkjctjzemzt4uvgv2/Billie-Eilish-WILDFLOWER.mp3?dl=1';
-            audio.load(); // Carrega o áudio (sem autoplay)
-            
-            // Eventos do áudio para atualizar o botão
-            audio.addEventListener('play', () => {
-                musicButton.classList.remove('play');
-                musicButton.classList.add('pause');
-                updateStatus(''); // Limpa status
-            });
-            
-            audio.addEventListener('pause', () => {
-                musicButton.classList.remove('pause');
-                musicButton.classList.add('play');
-                updateStatus(''); // Limpa status
-            });
-            
-            audio.addEventListener('ended', () => {
-                // Com loop=true, isso não deve disparar, mas caso precise resetar
-                musicButton.classList.remove('pause');
-                musicButton.classList.add('play');
-            });
-            
-            audio.addEventListener('error', (e) => {
-                console.error('Erro no áudio:', e);
-                updateStatus('Erro ao carregar o áudio. Verifique a conexão ou o link do arquivo.');
-            });
             
             // --- 1. EFEITO PARALLAX DO FUNDO ---
             const parallaxRange = 25; 
@@ -278,24 +222,63 @@
                 backgroundImage.classList.remove('theme-hover');
             });
 
-            // --- 4. EVENTO DO BOTÃO DE PLAY/PAUSE (AGORA USANDO HTML5 AUDIO - SEM AUTOPLAY) ---
+            // --- 4. INICIALIZAÇÃO DO PLAYER DO YOUTUBE (invisível) ---
+            // Função chamada pela API do YouTube quando o script carrega
+            window.onYouTubeIframeAPIReady = function() {
+                player = new YT.Player('youtube-player', {
+                    height: '0', // Invisível
+                    width: '0',  // Invisível
+                    videoId: 'l08Zw-RY__Q', // ID do vídeo
+                    playerVars: {
+                        'list': 'RDl08Zw-RY__Q', // Playlist
+                        'start': 0, // Inicia do começo (start_radio=1 é simulado pela playlist)
+                        'controls': 0, // Sem controles visíveis (já que é invisível)
+                        'modestbranding': 1,
+                        'rel': 0,
+                        'showinfo': 0,
+                        'iv_load_policy': 3,
+                        'enablejsapi': 1,
+                        'playsinline': 1, // Para mobile
+                        'autoplay': 0 // Não autoplay inicial
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            };
+
+            function onPlayerReady(event) {
+                // Player pronto, mas não inicia automaticamente
+                console.log('Player pronto');
+            }
+
+            function onPlayerStateChange(event) {
+                // Atualiza o botão baseado no estado do player
+                if (event.data == YT.PlayerState.PLAYING) {
+                    musicButton.classList.remove('play');
+                    musicButton.classList.add('pause');
+                } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                    musicButton.classList.remove('pause');
+                    musicButton.classList.add('play');
+                }
+            }
+
+            // --- 5. EVENTO DO BOTÃO DE PLAY/PAUSE ---
             musicButton.addEventListener('click', () => {
-                if (audio.paused) {
-                    audio.play().catch((error) => {
-                        console.error('Erro ao reproduzir áudio:', error);
-                        updateStatus('Erro ao reproduzir. Verifique permissões de áudio no navegador.');
-                    });
+                if (player && player.getPlayerState) {
+                    const state = player.getPlayerState();
+                    if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
+                        player.pauseVideo(); // Pausa
+                    } else {
+                        player.playVideo(); // Toca (requer interação do usuário para áudio)
+                    }
                 } else {
-                    audio.pause();
+                    // Fallback: se o player não carregou, abre o link no YouTube
+                    window.open('https://www.youtube.com/watch?v=l08Zw-RY__Q&list=RDl08Zw-RY__Q&start_radio=1', '_blank');
                 }
             });
 
-            // --- 5. VERIFICAÇÃO ADICIONAL: Se o áudio não carregar em 10s, avisa ---
-            setTimeout(() => {
-                if (audio.readyState === 0) {
-                    updateStatus('Falha no carregamento do áudio. Verifique sua conexão.');
-                }
-            }, 10000);
         });
     </script>
 
