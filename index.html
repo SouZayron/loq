@@ -88,27 +88,49 @@
             }
         }
 
-        /* Estilo para o player de música no rodapé (miniaturized/fixo no fundo, proporção 16:9) */
-        #footer-player {
+        /* Estilo para o botão de play/pause no rodapé à direita (sem miniatura visível) */
+        #music-button {
             position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 20px;
+            right: 20px;
             z-index: 1000;
             background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 5px;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            width: 320px;
-            height: 180px; /* Ajustado para proporção 16:9 (320 * 9/16 = 180) */
-            overflow: hidden;
+            transition: background 0.3s ease, transform 0.2s ease;
+            color: #62d44f;
+            font-size: 24px;
         }
 
-        #footer-player iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 5px;
+        #music-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        #music-button.play::before {
+            content: '▶'; /* Ícone de play */
+        }
+
+        #music-button.pause::before {
+            content: '⏸'; /* Ícone de pause */
+        }
+
+        /* Player invisível (áudio-only, sem vídeo/miniatura) */
+        #youtube-player {
+            position: absolute;
+            top: -9999px; /* Fora da tela para esconder */
+            left: -9999px;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -120,22 +142,23 @@
     
     <h1 class="main-text" id="mainText">Loquesiento</h1>
 
-    <!-- Player de música do YouTube no rodapé (miniaturized com proporção 16:9) -->
-    <div id="footer-player">
-        <iframe 
-            src="https://www.youtube.com/embed/l08Zw-RY__Q?list=RDl08Zw-RY__Q&start_radio=1&controls=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Fexample.com&widgetid=1" 
-            frameborder="0" 
-            allowfullscreen>
-        </iframe>
-    </div>
+    <!-- Botão de play/pause no rodapé à direita -->
+    <button id="music-button" class="play"></button>
+
+    <!-- Player do YouTube invisível (áudio-only) -->
+    <div id="youtube-player"></div>
     
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        // JavaScript - Interatividade
+        // JavaScript - Interatividade (incluindo controle do player de música)
+
+        let player; // Variável global para o player do YouTube
 
         document.addEventListener('DOMContentLoaded', () => {
 
             const mainText = document.getElementById('mainText');
             const backgroundImage = document.getElementById('background-image');
+            const musicButton = document.getElementById('music-button');
             
             // --- 1. EFEITO PARALLAX DO FUNDO ---
             const parallaxRange = 25; 
@@ -198,7 +221,64 @@
             mainText.addEventListener('mouseleave', () => {
                 backgroundImage.classList.remove('theme-hover');
             });
-            
+
+            // --- 4. INICIALIZAÇÃO DO PLAYER DO YOUTUBE (invisível) ---
+            // Função chamada pela API do YouTube quando o script carrega
+            window.onYouTubeIframeAPIReady = function() {
+                player = new YT.Player('youtube-player', {
+                    height: '0', // Invisível
+                    width: '0',  // Invisível
+                    videoId: 'l08Zw-RY__Q', // ID do vídeo
+                    playerVars: {
+                        'list': 'RDl08Zw-RY__Q', // Playlist
+                        'start': 0, // Inicia do começo (start_radio=1 é simulado pela playlist)
+                        'controls': 0, // Sem controles visíveis (já que é invisível)
+                        'modestbranding': 1,
+                        'rel': 0,
+                        'showinfo': 0,
+                        'iv_load_policy': 3,
+                        'enablejsapi': 1,
+                        'playsinline': 1, // Para mobile
+                        'autoplay': 0 // Não autoplay inicial
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            };
+
+            function onPlayerReady(event) {
+                // Player pronto, mas não inicia automaticamente
+                console.log('Player pronto');
+            }
+
+            function onPlayerStateChange(event) {
+                // Atualiza o botão baseado no estado do player
+                if (event.data == YT.PlayerState.PLAYING) {
+                    musicButton.classList.remove('play');
+                    musicButton.classList.add('pause');
+                } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                    musicButton.classList.remove('pause');
+                    musicButton.classList.add('play');
+                }
+            }
+
+            // --- 5. EVENTO DO BOTÃO DE PLAY/PAUSE ---
+            musicButton.addEventListener('click', () => {
+                if (player && player.getPlayerState) {
+                    const state = player.getPlayerState();
+                    if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
+                        player.pauseVideo(); // Pausa
+                    } else {
+                        player.playVideo(); // Toca (requer interação do usuário para áudio)
+                    }
+                } else {
+                    // Fallback: se o player não carregou, abre o link no YouTube
+                    window.open('https://www.youtube.com/watch?v=l08Zw-RY__Q&list=RDl08Zw-RY__Q&start_radio=1', '_blank');
+                }
+            });
+
         });
     </script>
 
