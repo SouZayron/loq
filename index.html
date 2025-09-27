@@ -163,7 +163,7 @@
     <button id="music-button" class="play"></button>
 
     <!-- Player de áudio invisível (substituindo o YouTube) -->
-    <audio id="audio-player" loop preload="metadata" autoplay></audio>
+    <audio id="audio-player" loop preload="metadata"></audio>
     
     <script>
         // JavaScript - Interatividade (incluindo controle do player de música)
@@ -176,7 +176,7 @@
                 statusEl.style.display = 'block';
                 setTimeout(() => {
                     statusEl.style.display = 'none';
-                }, 5000); // Aumentei para 5s para autoplay
+                }, 3000);
             } else {
                 statusEl.style.display = 'none';
             }
@@ -190,7 +190,7 @@
             
             // Configura o áudio com o link direto do Dropbox (adicionado ?dl=1 para download direto)
             audio.src = 'https://www.dropbox.com/scl/fi/mbzdvkjctjzemzt4uvgv2/Billie-Eilish-WILDFLOWER.mp3?dl=1';
-            audio.load(); // Carrega o áudio
+            audio.load(); // Carrega o áudio (sem autoplay)
             
             // Eventos do áudio para atualizar o botão
             audio.addEventListener('play', () => {
@@ -214,14 +214,6 @@
             audio.addEventListener('error', (e) => {
                 console.error('Erro no áudio:', e);
                 updateStatus('Erro ao carregar o áudio. Verifique a conexão ou o link do arquivo.');
-            });
-            
-            audio.addEventListener('canplay', () => {
-                // Quando o áudio está pronto para tocar, tenta autoplay
-                audio.play().catch((error) => {
-                    console.warn('Autoplay bloqueado pelo navegador:', error);
-                    updateStatus('Clique no botão ▶ para iniciar a música (autoplay bloqueado pelo navegador).');
-                });
             });
             
             // --- 1. EFEITO PARALLAX DO FUNDO ---
@@ -286,7 +278,7 @@
                 backgroundImage.classList.remove('theme-hover');
             });
 
-            // --- 4. EVENTO DO BOTÃO DE PLAY/PAUSE (AGORA USANDO HTML5 AUDIO) ---
+            // --- 4. EVENTO DO BOTÃO DE PLAY/PAUSE (AGORA USANDO HTML5 AUDIO - SEM AUTOPLAY) ---
             musicButton.addEventListener('click', () => {
                 if (audio.paused) {
                     audio.play().catch((error) => {
